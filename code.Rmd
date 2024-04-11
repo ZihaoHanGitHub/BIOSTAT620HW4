@@ -1,0 +1,268 @@
+---
+title: "BIOSTAT620 HW4"
+author: "Zihao Han"
+date: "2024-04-10"
+output: pdf_document
+header-includes:
+  - \usepackage{booktabs}
+  - \usepackage{multicol}
+---
+```{r setup, include=FALSE, warning = FALSE}
+# R setup
+library(readxl)
+library(dplyr)
+library(lubridate)
+library(tidyr)
+library(MatchIt)
+library(cobalt)
+library(ggplot2)
+```
+\section{PROBLEM 2}
+\subsection{(a)}
+```{r,echo=FALSE}
+baseline = read_excel("./ScreenTime-hw3Q3.xlsx",sheet = 2)
+ST = read_excel("./ScreenTime-hw3Q3.xlsx",sheet = 1)
+idB = baseline[baseline$Treatment == "B","pseudo_id"]
+STB = ST[ST$pseudo_id %in% idB$pseudo_id, ]
+ST_id <- split(STB, STB$pseudo_id)
+```
+```{r,echo=FALSE}
+for(id in idB$pseudo_id){
+  ST_loop = ST_id[[as.character(id)]]
+  ST_loop$Y_lag1 = lag(ST_loop$Pickups, n = 1, default = NA)
+  ST_loop$B = ifelse(ST_loop$Phase == "Treatment",1,0)
+  ST_loop$X = ifelse(ST_loop$Day == "Sa" | ST_loop$Day == "Su",0,1)
+  ST_id[[as.character(id)]] <- ST_loop
+}
+```
+```{r,echo=FALSE}
+model2 = glm(Pickups ~ log(Y_lag1) + B + X,
+             offset=log(Tot.Scr.Time),
+             family=poisson(link="log"),data=ST_id[["2"]][-1,])
+model3 = glm(Pickups ~ log(Y_lag1) + B + X,
+             offset = log(Tot.Scr.Time),
+             family=poisson(link="log"),data=ST_id[["3"]][-1,])
+model4 = glm(Pickups ~ log(Y_lag1) + B + X,
+             offset = log(Tot.Scr.Time),
+             family=poisson(link="log"),data=ST_id[["4"]][-1,])
+model5 = glm(Pickups ~ log(Y_lag1) + B + X,
+             offset = log(Tot.Scr.Time),
+             family=poisson(link="log"),data=ST_id[["5"]][-1,])
+model8 = glm(Pickups ~ log(Y_lag1) + B + X,
+             offset = log(Tot.Scr.Time),
+             family=poisson(link="log"),data=ST_id[["8"]][-1,])
+model15 = glm(Pickups ~log(Y_lag1) + B + X,
+              offset = log(Tot.Scr.Time),
+             family=poisson(link="log"),data=ST_id[["15"]][-1,])
+model16= glm(Pickups ~log(Y_lag1) + B + X,
+             offset = log(Tot.Scr.Time),
+             family=poisson(link="log"),data=ST_id[["16"]][-1,])
+model18 = glm(Pickups ~log(Y_lag1) + B + X,
+              offset = log(Tot.Scr.Time),
+             family=poisson(link="log"),data=ST_id[["18"]][-1,])
+```
+\begin{table}[h]
+\caption{Summary Table 1}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular*}{\textwidth}{@{\extracolsep\fill}lcccccccc}
+\toprule%
+& \multicolumn{2}{@{}c@{}}{ID \ = 2} & \multicolumn{2}{@{}c@{}}{ID \ = 4} & \multicolumn{2}{@{}c@{}}{ID \ = 5} \\\cmidrule{2-3}\cmidrule{4-5}\cmidrule{6-7}%
+ & Estimate & SE & Estimate & SE & Estimate & SE\\
+\midrule
+Intercept &-3.11572 &0.40268 &-2.91947 &0.54198 &-1.29324 &0.42682\\
+log(LagY) &0.29713  &0.08605 &0.27384  &0.11856 &0.05141  &0.08870\\
+B         &0.57866  &0.05304 &0.14223  &0.06778 &0.10785  &0.04763\\
+X         &0.22260  &0.05218 &0.23515  &0.05630 &0.68452  &0.04887\\
+\bottomrule
+\end{tabular*}
+\end{table}
+
+\begin{table}[h]
+\caption{Summary Table 2}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular*}{\textwidth}{@{\extracolsep\fill}lcccccccc}
+\toprule%
+& \multicolumn{2}{@{}c@{}}{ID \ = 5} & \multicolumn{2}{@{}c@{}}{ID \ = 8} & \multicolumn{2}{@{}c@{}}{ID \ = 15} \\\cmidrule{2-3}\cmidrule{4-5}\cmidrule{6-7}%
+ & Estimate & SE & Estimate & SE & Estimate & SE\\
+\midrule
+Intercept &-3.08547 &0.47240 &-4.12856 &0.41543 &-1.53479     &0.58279  \\
+log(LagY) &0.31959  &0.09998 &0.40651  &0.09882 &-0.04133     &0.12931  \\
+B         &0.60470  &0.05291 &0.96271  &0.07150 &0.11893      &0.06815   \\
+X         &0.30620  &0.04836 &0.48671  &0.07318 &0.34103      &0.06402   \\
+\bottomrule
+\end{tabular*}
+\end{table}
+
+
+\begin{table}[h]
+\caption{Summary Table 1}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular*}{\textwidth}{@{\extracolsep\fill}lcccccccc}
+\toprule%
+& \multicolumn{2}{@{}c@{}}{ID \ = 16} & \multicolumn{2}{@{}c@{}}{ID \ = 18} \\\cmidrule{2-3}\cmidrule{4-5}%
+ & Estimate & SE & Estimate & SE\\
+\midrule
+Intercept &-1.60634     &0.38281    &0.37645     &0.34637   \\
+log(LagY) &0.15564      &0.08393    &-0.21825      &0.07274  \\
+B         &0.34651      &0.05726    &0.52120      &0.05102  \\
+X         &0.02095      &0.05666    &-0.01393  &0.05313  \\
+\bottomrule
+\end{tabular*}
+\end{table}
+\subsection{(b)}
+```{r,echo=FALSE}
+models <- list(model2, model3, model4, model5, model8, model15, model16, model18)
+estimates0 <- numeric(length(models))
+SE0 <- numeric(length(models))
+estimatesY <- numeric(length(models))
+SEY <- numeric(length(models))
+estimatesB <- numeric(length(models))
+SEB <- numeric(length(models))
+estimatesX <- numeric(length(models))
+SEX <- numeric(length(models))
+for (i in seq_along(models)) {
+  model_summary <- summary(models[[i]])
+  estimates0[i] <- coef(models[[i]])["(Intercept)"]
+  SE0[i] <- model_summary$coefficients["(Intercept)", "Std. Error"]
+  estimatesY[i] <- coef(models[[i]])["log(Y_lag1)"]
+  SEY[i] <- model_summary$coefficients["log(Y_lag1)", "Std. Error"]
+  estimatesB[i] <- coef(models[[i]])["B"]
+  SEB[i] <- model_summary$coefficients["B", "Std. Error"]
+  estimatesX[i] <- coef(models[[i]])["X"]
+  SEX[i] <- model_summary$coefficients["X", "Std. Error"]
+}
+```
+
+```{r,echo = FALSE}
+meta = function(beta,SE){
+  numerator = 0
+  demorator = 0
+  for(i in seq_along(models)){
+    numerator = numerator + beta[i]/(SE[i])^2
+    demorator = demorator + 1/(SE[i])^2
+  }
+  beta = numerator/demorator
+  variance = 1 / demorator
+  return(list(beta = beta, SE = sqrt(variance)))
+}
+beta0 = meta(estimates0,SE0)
+betaY = meta(estimatesY,SEY)
+betaB = meta(estimatesB,SEB)
+betaX = meta(estimatesX,SEX)
+meta_df <- data.frame(
+  beta = c(beta0$beta, betaY$beta,betaB$beta,betaX$beta),
+  variance = c(beta0$SE, betaY$SE,betaB$SE,betaX$SE)
+)
+rownames(meta_df) <- c("Intercept", "Log(LagY)", "B", "X")
+meta_df
+```
+
+\subsection{(c)}
+```{r,echo=FALSE}
+t_statistics = betaB$beta / betaB$SE
+n = nrow(STB)
+p_value <- 2 * (1 - pt(abs(t_statistics), n - 4))
+cat("pvalue = ",p_value ,"\n")
+```
+In the output of code chunk, the result is $p\_value < 0.05$, therefore, the intervention B is effective to  reduce the daily number of pickups compare to pre-intervention.
+\subsection{(d)}
+
+Advantage of meta learning is it using the variance as the weights of each individuals, it causing an effective estimation of larger sample size; in federal learning, it using the summary statistics to estimate the beta without weigths, it causing effective estimation in small dataset. The disadvantages of Meta learning is it should assume the independence of each sites, however, federal learning do not need this assumption. More than that, the baseline covariates is difficult to input in the meta-learning.
+\section{PROBLEM 3}
+\subsection{(a)}
+
+```{r,echo=FALSE}
+baseline = read_excel("./ScreenTime-hw3Q3.xlsx",sheet = 2)
+ST = read_excel("./ScreenTime-hw3Q3.xlsx",sheet = 1)
+
+idB = baseline[baseline$Treatment == "B","pseudo_id"]
+STB = ST[ST$pseudo_id %in% idB$pseudo_id, ]
+STB_with_baseline <- left_join(STB, baseline, by = "pseudo_id")
+
+idA = baseline[baseline$Treatment == "A","pseudo_id"]
+STA = ST[ST$pseudo_id %in% idA$pseudo_id, ]
+STA_with_baseline <- left_join(STA, baseline, by = "pseudo_id")
+
+STB_with_baseline <- STB_with_baseline %>%
+  group_by(pseudo_id) %>%
+  mutate(Y_lag1 = lag(Pickups, n = 1, default = NA)) %>%
+  ungroup()
+STB_with_baseline$Trt = ifelse(STB_with_baseline$Phase == "Treatment",
+                             1,0)
+STB_with_baseline$X = ifelse(STB_with_baseline$Day == "Sa"| 
+                               STB_with_baseline$Day =="Su",
+                             0,1)
+
+STA_with_baseline <- STA_with_baseline %>%
+  group_by(pseudo_id) %>%
+  mutate(Y_lag1 = lag(Pickups, n = 1, default = NA)) %>%
+  ungroup()
+STA_with_baseline$Trt = ifelse(STA_with_baseline$Phase == "Treatment",
+                             1,0)
+STA_with_baseline$X = ifelse(STA_with_baseline$Day == "Sa"| 
+                               STA_with_baseline$Day =="Su",
+                             0,1)
+
+modelA = glm(Pickups ~ log(Y_lag1) + Trt + X + sex + 
+               age + pets + siblings +offset(log(Tot.Scr.Time)),
+             family=poisson(link="log"),data=STA_with_baseline)
+modelB = glm(Pickups ~ log(Y_lag1) + Trt + X + sex + 
+               age + pets + siblings +offset(log(Tot.Scr.Time)),
+             family=poisson(link="log"),data=STB_with_baseline)
+```
+
+```{r,echo=FALSE}
+estimateA = summary(modelA)$coefficients[,"Estimate"]
+estimateB = summary(modelB)$coefficients[,"Estimate"]
+stdA = summary(modelA)$coefficients[,"Std. Error"]
+stdB = summary(modelB)$coefficients[,"Std. Error"]
+
+estimatesMeta <- numeric(8)
+SEMeta <- numeric(8)
+for(i in seq_along(estimateA)){
+  numerator = estimateA[i]/(stdA[i])^2 + estimateB[i]/(stdB[i])^2
+  demorator = 1/(stdA[i])^2 + 1/(stdB[i])^2
+  estimatesMeta[i] = numerator / demorator
+  SEMeta[i] = 1/sqrt(demorator)
+}
+meta_df <- data.frame(
+  beta = estimatesMeta,
+  StdError = SEMeta
+)
+rownames(meta_df) <- c("Intercept", "Log(LagY)", "Trt", "X",
+                       "sex","age","pets","siblings")
+meta_df
+```
+\subsection{(b)}
+```{r,echo = FALSE}
+BetaTrt = meta_df["Trt","beta"]
+SETrt = meta_df["Trt","StdError"]
+t_statistics = BetaTrt/SETrt
+n = nrow(STA_with_baseline) + nrow(STB_with_baseline)
+p_value <- 2 * (1 - pt(abs(t_statistics), n - 8))
+p_value
+cat("pvalue = ",p_value,"\n")
+```
+
+
+
+In the output of code chunk, the result is $p\_value < 0.05$, therefore, the intervention ( A or B) is significant effective to  reduce the daily number of pickups.
+
+\subsection{(c)}
+```{r,echo = FALSE}
+
+dataAB = rbind(STA_with_baseline, STB_with_baseline)
+dataAB = na.omit(dataAB)
+dataAB$Rt = ifelse(dataAB$Phase == "Treatment",1,0)
+model = glm(Pickups ~ log(Y_lag1) + Rt + X + sex + 
+               age + pets + siblings +offset(log(Tot.Scr.Time)),
+             family=poisson(link="log"),data=dataAB)
+summary(model)
+```
+From the result of centralized model, the $\beta_{Rt} = 0.292717, se = 0.014713$, from the these two estimation, we get the $t-statistics = 19.89$, with a $p\_value < 0.05$, give a significant reduce in pickups times of during intervention compared to the pre-intervention.
+
+\subsection{(d)}
+In (b) and (d), we have the same conclusion of significant reduce on the pickups times, the difference between these two method is the meta-learning estimate the effect with weights (variance), but the centralized analysis regress the model without weights; more than that, the meta learning could do the test with intervention just in a signle intervention, but the centralized analysis cannot.
